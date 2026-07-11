@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IBKR — Luca</title>
+<style>
+:root{--bg:#0e1621;--panel:#16212e;--panel2:#1c2937;--line:#26374a;
+  --txt:#e8eef4;--dim:#8fa3b5;--up:#2ecc71;--down:#ff5f52;--gold:#e8a33d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.45 "Inter",-apple-system,sans-serif;padding:20px}
+.wrap{max-width:1200px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:20px;font-weight:700}h1 span{color:var(--gold)}
+button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button.gold{background:var(--gold);color:#12202c;border-color:var(--gold)}
+#stamp{color:var(--dim);font-size:12px;margin-left:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.kpi .lab{color:var(--dim);font-size:11px;font-weight:600;letter-spacing:.9px;text-transform:uppercase}
+.kpi .val{font-size:24px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card h2{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);padding:14px 18px;border-bottom:1px solid var(--line)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);
+  text-align:right;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer}
+th:first-child,td:first-child{text-align:left}
+td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--panel2);white-space:nowrap}
+tbody tr:hover{background:var(--panel2)}
+tfoot td{font-weight:700;border-top:1px solid var(--line);border-bottom:none;background:var(--panel2)}
+.coin{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;border-radius:50%;object-fit:contain;background:var(--panel2)}
+.fb{width:32px;height:32px;border-radius:50%;background:var(--panel2);display:flex;flex-shrink:0;
+  align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)}
+.cn{font-weight:600}.cs{color:var(--dim);font-size:12px;margin-left:4px}
+.up{color:var(--up)}.down{color:var(--down)}
+.setup{background:var(--panel);border:2px solid var(--gold);border-radius:12px;padding:20px;margin-bottom:18px}
+.setup h3{color:var(--gold);font-size:14px;margin-bottom:10px}
+.setup p{color:var(--dim);font-size:13px;margin-bottom:14px;line-height:1.6}
+.setup-row{display:flex;gap:10px}
+.setup-row input{flex:1;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:10px 14px;font:14px inherit}
+.setup-row input:focus{outline:2px solid var(--gold)}
+.msg{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px}
+.err{background:#3a1f1f;border:1px solid var(--down);color:#ffb3ad}
+.hide{display:none}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 18px}
+.fg label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--dim)}
+.fg input,.fg select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:9px 11px;font:14px inherit}
+.fg input:focus,.fg select:focus{outline:2px solid var(--gold);outline-offset:1px}
+.prev{margin:0 18px 12px;padding:10px 14px;background:var(--panel2);border-radius:8px;font-size:13px;color:var(--dim)}
+.fa{display:flex;gap:10px;padding:0 18px 16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.al{padding:18px}
+.ar{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13px}
+.ar b{margin-left:auto}
+.tr{flex:1;height:7px;background:var(--panel2);border-radius:4px;overflow:hidden;max-width:150px}
+.tr i{display:block;height:100%;background:var(--gold)}
+.del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:2px 6px}
+.del:hover{color:var(--down)}
+.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
+.tag.a{background:#12351f;color:var(--up)}.tag.v{background:#3a1f1f;color:var(--down)}
+@media(max-width:820px){.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>IBKR — <span>LUCA</span></h1>
+  <button id="refresh">Actualiser les prix</button>
+  <button id="addBtn" class="gold">+ Ajouter une transaction</button>
+  <button id="expBtn">Exporter</button>
+  <button id="impBtn">Importer</button>
+  <input type="file" id="impFile" accept="application/json" class="hide">
+  <span id="stamp">—</span>
+</header>
+
+<div id="setup" class="setup">
+  <h3 id="setupTitle">⚙️ Clé API Twelve Data — actions mondiales US + Europe</h3>
+  <p id="setupDesc">Colle ta clé Twelve Data ci-dessous. Elle est sauvegardée une seule fois.</p>
+  <div class="setup-row">
+    <input type="text" id="apiKeyInput" placeholder="Colle ta clé Twelve Data ici...">
+    <button class="gold" id="saveKey">Valider</button>
+    <button id="clearKey" class="hide">Changer de clé</button>
+  </div>
+</div>
+
+<div id="err" class="msg err hide"></div>
+
+<div id="form" class="card hide" style="margin-bottom:16px">
+  <h2>Nouvelle transaction</h2>
+  <div class="fg">
+    <label>Date<input type="datetime-local" id="fDate"></label>
+    <label>Type<select id="fType"><option value="Achat">Achat</option><option value="Vente">Vente</option></select></label>
+    <label>Symbole<input type="text" id="fSym" placeholder="ex. NVDA"></label>
+    <label>Nom<input type="text" id="fName" placeholder="ex. Nvidia"></label>
+    <label>Quantité<input type="number" id="fQty" step="any" min="0"></label>
+    <label>Prix unitaire<input type="number" id="fPrice" step="any" min="0"></label>
+    <label>Frais<input type="number" id="fFee" step="any" min="0" value="0"></label>
+    <label>Devise<select id="fCur"><option value="USD">USD</option><option value="EUR">EUR</option></select></label>
+  </div>
+  <div class="prev" id="prev">Remplis les champs pour voir l'aperçu.</div>
+  <div class="fa">
+    <button id="saveBtn" class="gold">Enregistrer</button>
+    <button id="cancelBtn">Annuler</button>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="lab">Valeur actuelle</div><div class="val" id="kVal">—</div></div>
+  <div class="kpi"><div class="lab">Capital investi</div><div class="val" id="kCap">—</div></div>
+  <div class="kpi"><div class="lab">P/L</div><div class="val" id="kPl">—</div></div>
+  <div class="kpi"><div class="lab">Performance</div><div class="val" id="kPct">—</div></div>
+</div>
+
+<div class="card">
+  <h2>Portefeuille IBKR — <span id="posCount">—</span> positions</h2>
+  <div class="scroll"><table>
+    <thead><tr>
+      <th data-k="name">Action</th><th data-k="qty">Quantité</th><th data-k="pma">PMA</th>
+      <th data-k="price">Prix actuel</th><th data-k="capital">Capital</th>
+      <th data-k="value">Valeur</th><th data-k="pl">P/L</th>
+      <th data-k="plp">P/L %</th><th data-k="w">Poids</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+    <tfoot><tr>
+      <td>TOTAL</td><td></td><td></td><td></td>
+      <td id="tCap"></td><td id="tVal"></td><td id="tPl"></td><td id="tPlp"></td><td>100%</td>
+    </tr></tfoot>
+  </table></div>
+</div>
+
+<div class="g2">
+  <div class="card al"><h2 style="padding:0 0 14px;border:none">Répartition</h2><div id="alloc"></div></div>
+  <div class="card al"><h2 style="padding:0 0 14px;border:none">P/L par position</h2><div id="plbars"></div></div>
+</div>
+
+<div class="card">
+  <h2>Mes transactions <span id="txCount"></span></h2>
+  <div class="scroll"><table>
+    <thead><tr>
+      <th style="cursor:default;text-align:left">Date</th>
+      <th style="cursor:default;text-align:left">Type</th>
+      <th style="cursor:default;text-align:left">Action</th>
+      <th style="cursor:default">Quantité</th>
+      <th style="cursor:default">Prix</th>
+      <th style="cursor:default">Frais</th>
+      <th style="cursor:default"></th>
+    </tr></thead>
+    <tbody id="txRows"></tbody>
+  </table></div>
+</div>
+</div>
+
+<script>
+const BASE_TX=[
+  {date:"2026-02-12",type:"Achat",sym:"GOOGL",name:"Alphabet",qty:0.33,price:312.01,fee:0.77,cur:"USD",id:1},
+  {date:"2026-02-12",type:"Achat",sym:"TSLA",name:"Tesla",qty:0.2975,price:430.00,fee:0.77,cur:"USD",id:2},
+  {date:"2026-02-12",type:"Achat",sym:"TSLA",name:"Tesla",qty:0.0001,price:431.62,fee:0,cur:"USD",id:3},
+  {date:"2026-02-13",type:"Achat",sym:"COIN",name:"Coinbase",qty:0.2,price:158.70,fee:0.24,cur:"USD",id:4},
+  {date:"2026-02-17",type:"Achat",sym:"GOOGL",name:"Alphabet",qty:0.0981,price:299.62,fee:0.23,cur:"USD",id:5},
+  {date:"2026-02-23",type:"Achat",sym:"TSLA",name:"Tesla",qty:0.062,price:402.66,fee:0.19,cur:"USD",id:6},
+  {date:"2026-03-09",type:"Achat",sym:"TSLA",name:"Tesla",qty:0.12,price:388.69,fee:0.36,cur:"USD",id:7},
+  {date:"2026-03-12",type:"Achat",sym:"AAPL",name:"Apple",qty:0.1275,price:258.67,fee:0.26,cur:"USD",id:8},
+  {date:"2026-03-27",type:"Achat",sym:"COIN",name:"Coinbase",qty:0.1,price:160.77,fee:0.13,cur:"USD",id:9},
+  {date:"2026-03-27",type:"Achat",sym:"GOOGL",name:"Alphabet",qty:0.1,price:278.64,fee:0.22,cur:"USD",id:10},
+  {date:"2026-06-09",type:"Achat",sym:"TSLA",name:"Tesla",qty:0.0513,price:390.00,fee:0.16,cur:"USD",id:11},
+  {date:"2026-06-09",type:"Achat",sym:"MSFT",name:"Microsoft",qty:0.12,price:399.68,fee:0.38,cur:"USD",id:12},
+  {date:"2026-06-09",type:"Achat",sym:"IONQ",name:"IonQ",qty:0.5,price:53.53,fee:0.21,cur:"USD",id:13},
+  {date:"2026-06-11",type:"Achat",sym:"NVDA",name:"Nvidia",qty:0.1,price:199.99,fee:0.16,cur:"USD",id:14},
+  {date:"2026-06-12",type:"Achat",sym:"MSFT",name:"Microsoft",qty:0.026,price:384.38,fee:0.08,cur:"USD",id:15},
+  {date:"2026-06-15",type:"Achat",sym:"AMZN",name:"Amazon",qty:0.044,price:244.90,fee:0.09,cur:"USD",id:16},
+  {date:"2026-06-15",type:"Achat",sym:"V",name:"Visa",qty:0.031,price:323.50,fee:0.08,cur:"USD",id:17},
+  {date:"2026-06-19",type:"Achat",sym:"AI:XPAR",name:"Air Liquide",qty:0.121,price:165.38,fee:1.16,cur:"EUR",id:18},
+  {date:"2026-06-23",type:"Achat",sym:"AMZN",name:"Amazon",qty:0.0862,price:232.06,fee:0.16,cur:"USD",id:19},
+  {date:"2026-06-26",type:"Achat",sym:"IONQ",name:"IonQ",qty:0.21,price:49.245,fee:0.08,cur:"USD",id:20},
+  {date:"2026-06-29",type:"Achat",sym:"NVDA",name:"Nvidia",qty:0.0514,price:190.53,fee:0.08,cur:"USD",id:21},
+  {date:"2026-06-29",type:"Achat",sym:"MSFT",name:"Microsoft",qty:0.041,price:372.89,fee:0.12,cur:"USD",id:22},
+  {date:"2026-07-06",type:"Achat",sym:"FORM",name:"FormFactor",qty:0.081,price:125.82,fee:0.08,cur:"USD",id:23},
+  {date:"2026-07-07",type:"Achat",sym:"MKSI",name:"MKS Instruments",qty:0.03,price:334.97,fee:0.08,cur:"USD",id:24},
+];
+
+const TXKEY="ibkr_tx_v4",KEYKEY="ibkr_td_key";
+let TX=[],apiKey="",EURUSD=1.08;
+try{TX=JSON.parse(localStorage.getItem(TXKEY)||"null")||[...BASE_TX];}catch(e){TX=[...BASE_TX];}
+try{apiKey=localStorage.getItem(KEYKEY)||"";}catch(e){}
+
+const $=id=>document.getElementById(id);
+const fmt=n=>(n<0?"-$":"$")+Math.abs(n).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fpct=n=>(n>=0?"+":"")+((n*100).toFixed(2))+"%";
+const cls=n=>n>=0?"up":"down";
+let sortKey="value",sortDir=-1,current=[];
+function saveTx(){try{localStorage.setItem(TXKEY,JSON.stringify(TX));}catch(e){}}
+
+function logo(sym){
+  const b=sym.replace(/:.+$/,"").replace(/\..+$/,"");
+  return`<img class="logo" src="https://assets.parqet.com/logos/symbol/${b}?format=jpg" alt="${b}"
+    onerror="this.outerHTML='<div class=fb>${b.slice(0,3)}</div>'">`;
+}
+
+function updateSetupUI(){
+  if(apiKey){
+    $("apiKeyInput").value="••••••••••••"+apiKey.slice(-4);
+    $("apiKeyInput").disabled=true;
+    $("saveKey").classList.add("hide");
+    $("clearKey").classList.remove("hide");
+    $("setup").style.borderColor="var(--up)";
+    $("setupTitle").textContent="✅ Clé API Twelve Data configurée — US + Europe couverts";
+    $("setupDesc").classList.add("hide");
+  }
+}
+updateSetupUI();
+
+$("saveKey").onclick=()=>{
+  const k=$("apiKeyInput").value.trim();
+  if(!k){alert("Colle ta clé.");return;}
+  apiKey=k;try{localStorage.setItem(KEYKEY,k);}catch(e){}
+  updateSetupUI();load();
+};
+$("clearKey").onclick=()=>{
+  apiKey="";try{localStorage.removeItem(KEYKEY);}catch(e){}
+  $("apiKeyInput").value="";$("apiKeyInput").disabled=false;
+  $("saveKey").classList.remove("hide");$("clearKey").classList.add("hide");
+  $("setup").style.borderColor="var(--gold)";
+  $("setupTitle").textContent="⚙️ Clé API Twelve Data";
+  $("setupDesc").classList.remove("hide");
+};
+
+function buildPositions(){
+  const m=new Map();
+  const sorted=[...TX].sort((a,b)=>a.date.localeCompare(b.date));
+  for(const t of sorted){
+    if(!m.has(t.sym)) m.set(t.sym,{sym:t.sym,name:t.name,qty:0,cost:0,cur:t.cur});
+    const p=m.get(t.sym),q=+t.qty,price=+t.price,fee=+t.fee||0;
+    if(t.type==="Achat"){p.cost+=q*price+fee;p.qty+=q;}
+    else{const r=Math.max(0,(p.qty-q)/p.qty);p.qty=Math.max(0,p.qty-q);p.cost*=r;}
+  }
+  return[...m.values()].filter(p=>p.qty>0.000001).map(p=>({...p,pma:p.cost/p.qty}));
+}
+
+async function fetchChunk(syms){
+  const url=`https://api.twelvedata.com/price?symbol=${encodeURIComponent(syms.join(","))}&apikey=${apiKey}`;
+  const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const d=await r.json();
+  if(d.status==="error") throw new Error(d.message||"Erreur Twelve Data");
+  const out={};
+  if(syms.length===1&&d.price) out[syms[0]]=parseFloat(d.price);
+  else for(const [k,v] of Object.entries(d)) if(v.price) out[k]=parseFloat(v.price);
+  return out;
+}
+
+async function getPrices(pos){
+  const allSyms=pos.map(p=>p.sym).concat(["EUR/USD"]);
+  // Chunk par 8 pour respecter la limite gratuite Twelve Data
+  const chunks=[];
+  for(let i=0;i<allSyms.length;i+=8) chunks.push(allSyms.slice(i,i+8));
+  const results=await Promise.all(chunks.map(c=>fetchChunk(c)));
+  const out={};
+  for(const r of results) for(const [k,v] of Object.entries(r)){
+    if(k==="EUR/USD") EURUSD=v;
+    else out[k]=v;
+  }
+  return out;
+}
+
+function compute(pos,prices){
+  return pos.map(p=>{
+    let price=prices?.[p.sym]??0;
+    if(p.cur==="EUR"&&price) price*=EURUSD;
+    const capital=p.qty*p.pma,value=p.qty*price;
+    return{...p,price,capital,value,pl:value-capital,plp:capital?(value-capital)/capital:0};
+  });
+}
+
+function render(rows){
+  const tVal=rows.reduce((s,r)=>s+r.value,0);
+  const tCap=rows.reduce((s,r)=>s+r.capital,0);
+  const tPl=tVal-tCap,tPlp=tCap?tPl/tCap:0;
+  rows.forEach(r=>r.w=tVal?r.value/tVal:0);
+  $("posCount").textContent=rows.length;
+  $("kVal").textContent=fmt(tVal);$("kCap").textContent=fmt(tCap);
+  $("kPl").textContent=fmt(tPl);$("kPl").className="val "+cls(tPl);
+  $("kPct").textContent=fpct(tPlp);$("kPct").className="val "+cls(tPlp);
+  $("tCap").textContent=fmt(tCap);$("tVal").textContent=fmt(tVal);
+  $("tPl").textContent=fmt(tPl);$("tPl").className=cls(tPl);
+  $("tPlp").textContent=fpct(tPlp);$("tPlp").className=cls(tPlp);
+  const s=[...rows].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];
+    return(typeof x==="string"?x.localeCompare(y):x-y)*sortDir;});
+  $("rows").innerHTML=s.map(r=>`<tr>
+    <td><div class="coin">${logo(r.sym)}<span><span class="cn">${r.name}</span><span class="cs">${r.sym}</span></span></div></td>
+    <td>${r.qty.toLocaleString("de-CH",{maximumFractionDigits:6})}</td>
+    <td>${fmt(r.pma)}</td><td>${r.price?fmt(r.price):"—"}</td>
+    <td>${fmt(r.capital)}</td><td>${fmt(r.value)}</td>
+    <td class="${cls(r.pl)}">${fmt(r.pl)}</td>
+    <td class="${cls(r.plp)}">${fpct(r.plp)}</td>
+    <td>${(r.w*100).toFixed(1)}%</td>
+  </tr>`).join("");
+  const byW=[...rows].sort((a,b)=>b.w-a.w);
+  $("alloc").innerHTML=byW.map(r=>`<div class="ar">${logo(r.sym)}
+    <span style="flex:1;font-weight:600">${r.sym.replace(/:XPAR/,"")} <span style="color:var(--dim);font-weight:400;font-size:12px">${r.name}</span></span>
+    <div class="tr"><i style="width:${(r.w/byW[0].w*100).toFixed(1)}%"></i></div>
+    <b>${(r.w*100).toFixed(1)}%</b></div>`).join("");
+  const byPl=[...rows].sort((a,b)=>b.pl-a.pl);
+  const mx=Math.max(...byPl.map(r=>Math.abs(r.pl)))||1;
+  $("plbars").innerHTML=byPl.map(r=>`<div class="ar">${logo(r.sym)}
+    <span style="width:55px;font-weight:600">${r.sym.replace(/:XPAR/,"")}</span>
+    <div class="tr"><i style="width:${(Math.abs(r.pl)/mx*100).toFixed(1)}%;background:${r.pl>=0?"var(--up)":"var(--down)"}"></i></div>
+    <b class="${cls(r.pl)}">${fmt(r.pl)}</b></div>`).join("");
+}
+
+function renderTx(){
+  $("txCount").textContent=TX.length?"— "+TX.length:"";
+  $("txRows").innerHTML=[...TX].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr>
+    <td style="text-align:left">${t.date?.replace("T"," ")||"—"}</td>
+    <td style="text-align:left"><span class="tag ${t.type==="Achat"?"a":"v"}">${t.type}</span></td>
+    <td style="text-align:left"><div class="coin" style="gap:8px">${logo(t.sym)}<b>${t.sym}</b></div></td>
+    <td>${Number(t.qty).toLocaleString("de-CH",{maximumFractionDigits:8})}</td>
+    <td>${fmt(t.price)} ${t.cur}</td><td>${fmt(t.fee||0)}</td>
+    <td><button class="del" data-id="${t.id}">✕</button></td>
+  </tr>`).join("");
+  document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
+    TX=TX.filter(t=>String(t.id)!==b.dataset.id);saveTx();load();
+  });
+}
+
+async function load(){
+  const pos=buildPositions();
+  if(!apiKey){current=compute(pos,{});render(current);renderTx();return;}
+  const btn=$("refresh");btn.disabled=true;btn.textContent="Chargement…";
+  $("err").classList.add("hide");
+  try{
+    const prices=await getPrices(pos);
+    current=compute(pos,prices);
+    $("stamp").textContent="Prix à jour — "+new Date().toLocaleString("fr-CH");
+  }catch(e){
+    $("err").textContent="Erreur : "+e.message;
+    $("err").classList.remove("hide");
+    current=compute(pos,{});
+  }
+  render(current);renderTx();
+  btn.disabled=false;btn.textContent="Actualiser les prix";
+}
+
+$("addBtn").onclick=()=>{
+  $("form").classList.toggle("hide");
+  if(!$("form").classList.contains("hide")){
+    const n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());
+    $("fDate").value=n.toISOString().slice(0,16);
+    $("form").scrollIntoView({behavior:"smooth"});$("fSym").focus();
+  }
+};
+$("cancelBtn").onclick=()=>$("form").classList.add("hide");
+function showPrev(){
+  const sym=$("fSym").value.toUpperCase(),q=+$("fQty").value,price=+$("fPrice").value,fee=+$("fFee").value||0;
+  if(!sym||!q||!price){$("prev").textContent="Remplis les champs.";return;}
+  const pos=buildPositions(),cur=pos.find(p=>p.sym===sym)||{qty:0,pma:0};
+  if($("fType").value==="Achat"){
+    const nq=cur.qty+q,npma=(cur.qty*cur.pma+q*price+fee)/nq;
+    $("prev").innerHTML=`Après : <b>${nq.toFixed(6)} ${sym}</b> — nouveau PMA <b>${fmt(npma)}</b>`
+      +(cur.pma?` <span class="${npma<cur.pma?"up":"down"}">${npma<cur.pma?"▼":"▲"} depuis ${fmt(cur.pma)}</span>`:"");
+  }else{
+    const pl=q*price-q*cur.pma;
+    $("prev").innerHTML=`P/L réalisé : <b class="${cls(pl)}">${fmt(pl)}</b>`;
+  }
+}
+[$("fSym"),$("fType"),$("fQty"),$("fPrice"),$("fFee")].forEach(e=>e?.addEventListener("input",showPrev));
+$("saveBtn").onclick=()=>{
+  const sym=$("fSym").value.trim().toUpperCase(),name=$("fName").value.trim()||sym;
+  const q=+$("fQty").value,price=+$("fPrice").value;
+  if(!sym||!q||!price){alert("Symbole, quantité et prix obligatoires.");return;}
+  TX.push({date:$("fDate").value,type:$("fType").value,sym,name,qty:q,
+    price,fee:+$("fFee").value||0,cur:$("fCur").value,id:Date.now()});
+  saveTx();$("form").classList.add("hide");
+  [$("fSym"),$("fName"),$("fQty"),$("fPrice")].forEach(e=>e.value="");$("fFee").value="0";
+  load();
+};
+$("expBtn").onclick=()=>{
+  const b=new Blob([JSON.stringify(TX,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);
+  a.download=`ibkr_${new Date().toISOString().slice(0,10)}.json`;a.click();
+};
+$("impBtn").onclick=()=>$("impFile").click();
+$("impFile").onchange=async e=>{
+  try{TX=JSON.parse(await e.target.files[0].text());saveTx();load();}
+  catch(err){alert("Fichier illisible.");}e.target.value="";
+};
+document.querySelectorAll("th[data-k]").forEach(th=>th.addEventListener("click",()=>{
+  const k=th.dataset.k;sortDir=(k===sortKey)?-sortDir:-1;sortKey=k;if(current.length)render(current);
+}));
+$("refresh").addEventListener("click",load);
+load();
+</script>
+</body>
+</html>
